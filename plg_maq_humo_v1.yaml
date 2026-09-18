@@ -1,5 +1,5 @@
 blueprint:
-  name: "Control de Humo/Extracción Interactivo por Habitación (Segundos)"
+  name: "plg_maq_humo_v1"
   description: "Permite al operario seleccionar el selector de ocupación y el interruptor de extractor correspondiente, configurando los tiempos en segundos."
   domain: automation
   input:
