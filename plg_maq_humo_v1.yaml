@@ -1,6 +1,6 @@
 blueprint:
-  name: "Control de Humo/Extracción Interactivo por Habitación"
-  description: "Permite al operario seleccionar el selector de ocupación y el interruptor de extractor correspondiente sin tocar código."
+  name: "Control de Humo/Extracción Interactivo por Habitación (Segundos)"
+  description: "Permite al operario seleccionar el selector de ocupación y el interruptor de extractor correspondiente, configurando los tiempos en segundos."
   domain: automation
   input:
     selector_ocupacion:
@@ -20,24 +20,24 @@ blueprint:
             - domain: switch
 
     tiempo_espera_inicial:
-      name: Tiempo de espera inicial (minutos)
-      description: Minutos transcurridos desde que pasa a Ocupado hasta el primer encendido.
-      default: 10
+      name: Tiempo de espera inicial (segundos)
+      description: Segundos transcurridos desde que pasa a Ocupado hasta el primer encendido.
+      default: 600
       selector:
         number:
           min: 1
-          max: 60
-          unit_of_measurement: "minutos"
+          max: 3600
+          unit_of_measurement: "segundos"
 
     tiempo_intervalo_ciclo:
-      name: Intervalo entre encendidos (minutos)
-      description: Tiempo entre repeticiones mientras continúe ocupada.
-      default: 30
+      name: Intervalo entre encendidos (segundos)
+      description: Tiempo en segundos entre repeticiones mientras continúe ocupada.
+      default: 1800
       selector:
         number:
           min: 5
-          max: 120
-          unit_of_measurement: "minutos"
+          max: 7200
+          unit_of_measurement: "segundos"
 
 # Variables internas leídas desde el formulario del operario
 variables:
@@ -52,9 +52,9 @@ triggers:
 conditions: []
 
 actions:
-  # 1. Espera inicial configurada por el operario
+  # 1. Espera inicial configurada en segundos por el operario
   - delay:
-      minutes: !input tiempo_espera_inicial
+      seconds: !input tiempo_espera_inicial
 
   # 2. Verificar que continúe 'Ocupado'
   - condition: template
@@ -72,7 +72,7 @@ actions:
           value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
       sequence:
         - delay:
-            minutes: !input tiempo_intervalo_ciclo
+            seconds: !input tiempo_intervalo_ciclo
         - condition: template
           value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
         - action: switch.turn_on
