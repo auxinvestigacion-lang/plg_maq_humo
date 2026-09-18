@@ -1,27 +1,27 @@
 blueprint:
-  name: "plg_maq_humo_v1"
-  description: "Permite al operario seleccionar el selector de ocupación y el interruptor de extractor correspondiente, configurando los tiempos en segundos."
+  name: "Bp-Plugin Humo v1.0"
+  description: "Ingresar descripcion."
   domain: automation
   input:
     selector_ocupacion:
-      name: Selector de Ocupación
-      description: Selecciona el input_select de la habitación (ej. input_select.plgmotelfar_128).
+      name: Selector Plugin Motel
+      description: Selecciona el plugin de la habitación.
       selector:
         entity:
           filter:
             - domain: input_select
     
     switch_humo:
-      name: Extractor / Switch de Humo
-      description: Selecciona el switch del extractor de la habitación (ej. switch.habitacion_128_cs_humo_hab_128).
+      name: Selector CS_Humo
+      description: Selecciona el contacto seco del disparados de humo de la habitación.
       selector:
         entity:
           filter:
             - domain: switch
 
     tiempo_espera_inicial:
-      name: Tiempo de espera inicial (segundos)
-      description: Segundos transcurridos desde que pasa a Ocupado hasta el primer encendido.
+      name: Disparo inicial (segundos)
+      description: Seleccion de tiempo para el primer dispado de humo.
       default: 600
       selector:
         number:
