@@ -1,0 +1,82 @@
+blueprint:
+  name: "Control de Humo/Extracción Interactivo por Habitación"
+  description: "Permite al operario seleccionar el selector de ocupación y el interruptor de extractor correspondiente sin tocar código."
+  domain: automation
+  input:
+    selector_ocupacion:
+      name: Selector de Ocupación
+      description: Selecciona el input_select de la habitación (ej. input_select.plgmotelfar_128).
+      selector:
+        entity:
+          filter:
+            - domain: input_select
+    
+    switch_humo:
+      name: Extractor / Switch de Humo
+      description: Selecciona el switch del extractor de la habitación (ej. switch.habitacion_128_cs_humo_hab_128).
+      selector:
+        entity:
+          filter:
+            - domain: switch
+
+    tiempo_espera_inicial:
+      name: Tiempo de espera inicial (minutos)
+      description: Minutos transcurridos desde que pasa a Ocupado hasta el primer encendido.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "minutos"
+
+    tiempo_intervalo_ciclo:
+      name: Intervalo entre encendidos (minutos)
+      description: Tiempo entre repeticiones mientras continúe ocupada.
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 120
+          unit_of_measurement: "minutos"
+
+# Variables internas leídas desde el formulario del operario
+variables:
+  entidad_ocupacion: !input selector_ocupacion
+  entidad_switch: !input switch_humo
+
+triggers:
+  - trigger: state
+    entity_id: !input selector_ocupacion
+    to: "Ocupado"
+
+conditions: []
+
+actions:
+  # 1. Espera inicial configurada por el operario
+  - delay:
+      minutes: !input tiempo_espera_inicial
+
+  # 2. Verificar que continúe 'Ocupado'
+  - condition: template
+    value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
+
+  # 3. Primer encendido del extractor
+  - action: switch.turn_on
+    target:
+      entity_id: !input switch_humo
+
+  # 4. Bucle recurrente interactivo
+  - repeat:
+      while:
+        - condition: template
+          value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
+      sequence:
+        - delay:
+            minutes: !input tiempo_intervalo_ciclo
+        - condition: template
+          value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
+        - action: switch.turn_on
+          target:
+            entity_id: !input switch_humo
+
+mode: parallel
