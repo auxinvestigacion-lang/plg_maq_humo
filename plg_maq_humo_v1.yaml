@@ -1,7 +1,7 @@
 blueprint:
   name: "Bp-Plugin Humo v1.0"
   description: 
-    Automatizacion para controla el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
+    Automatizacion para controlar el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
     Espera un tiempo inicial configurado antes del primer disparo y luego repite la acción periódicamente mientras la habitación continúe ocupada.
     Permite al operario vincular los dispositivos y ajustar los tiempos en segundos desde la interfaz sin modificar código.
 
@@ -17,7 +17,7 @@ blueprint:
     
     switch_humo:
       name: Selector CS_Humo
-      description: Selecciona el contacto seco del disparados de humo de la habitación.
+      description: Selecciona el contacto seco del disparador de humo de la habitación.
       selector:
         entity:
           filter:
@@ -25,7 +25,7 @@ blueprint:
 
     tiempo_espera_inicial:
       name: Disparo inicial (segundos)
-      description: Seleccion de tiempo para el primer dispado de humo.
+      description: Seleccion de tiempo para el primer disparo de humo.
       default: 600
       selector:
         number:
