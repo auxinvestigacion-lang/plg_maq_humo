@@ -1,6 +1,10 @@
 blueprint:
   name: "Bp-Plugin Humo v1.0"
-  description: "Ingresar descripcion."
+  description: 
+    Automatizacion para controla el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
+    Espera un tiempo inicial configurado antes del primer disparo y luego repite la acción periódicamente mientras la habitación continúe ocupada.
+    Permite al operario vincular los dispositivos y ajustar los tiempos en segundos desde la interfaz sin modificar código.
+
   domain: automation
   input:
     selector_ocupacion:
