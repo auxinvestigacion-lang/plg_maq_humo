@@ -1,7 +1,7 @@
 blueprint:
   name: "Bp-Plugin Humo v1.0"
   description: |
-    Automatizacion para controlar el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
+    Automatización para controlar el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
     Espera un tiempo inicial configurado antes del primer disparo y luego repite la acción periódicamente hasta un máximo de 5 veces mientras la habitación continúe ocupada.
     Permite al operario vincular los dispositivos y ajustar los tiempos en segundos desde la interfaz sin modificar código.
 
@@ -14,7 +14,7 @@ blueprint:
         entity:
           filter:
             - domain: input_select
-    
+
     switch_humo:
       name: Selector CS_Humo
       description: Selecciona el contacto seco del disparador de humo de la habitación.
@@ -25,7 +25,7 @@ blueprint:
 
     tiempo_espera_inicial:
       name: Disparo inicial (segundos)
-      description: Seleccion de tiempo para el primer disparo de humo.
+      description: Selección de tiempo para el primer disparo de humo.
       default: 600
       selector:
         number:
@@ -52,36 +52,28 @@ triggers:
   - trigger: state
     entity_id: !input selector_ocupacion
     to: "Ocupado"
-
-conditions: []
-
-actions:
-  # 1. Espera inicial configurada en segundos por el operario
-  - delay:
+    for:
       seconds: !input tiempo_espera_inicial
 
-  # 2. Verificar que continúe 'Ocupado'
-  - condition: template
-    value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
+conditions:
+  - condition: state
+    entity_id: !input selector_ocupacion
+    state: "Ocupado"
 
-  # 3. Primer encendido del extractor
-  - action: switch.turn_on
-    target:
-      entity_id: !input switch_humo
-
-  # 4. Bucle recurrente (Límite de 5 repeticiones o hasta desocuparse)
+actions:
+  # Ciclo de máximo 5 repeticiones mientras continúe Ocupado
   - repeat:
-      until:
+      while:
+        - condition: state
+          entity_id: !input selector_ocupacion
+          state: "Ocupado"
         - condition: template
-          value_template: >-
-            {{ not is_state(entidad_ocupacion, 'Ocupado') or repeat.index >= 5 }}
+          value_template: "{{ repeat.index <= 5 }}"
       sequence:
-        - delay:
-            seconds: !input tiempo_intervalo_ciclo
-        - condition: template
-          value_template: "{{ is_state(entidad_ocupacion, 'Ocupado') }}"
         - action: switch.turn_on
           target:
             entity_id: !input switch_humo
+        - delay:
+            seconds: !input tiempo_intervalo_ciclo
 
-mode: parallel
+mode: restart
