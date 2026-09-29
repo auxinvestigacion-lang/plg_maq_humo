@@ -1,0 +1,79 @@
+blueprint:
+  name: "Bp-Plugin Humo v1.0"
+  description: |
+    Automatización para controlar el activador de humo de una habitación de forma cíclica y automática cuando pasa a estado "Ocupado".
+    Espera un tiempo inicial configurado antes del primer disparo y luego repite la acción periódicamente hasta un máximo de 5 veces mientras la habitación continúe ocupada.
+    Permite al operario vincular los dispositivos y ajustar los tiempos en segundos desde la interfaz sin modificar código.
+
+  domain: automation
+  input:
+    selector_ocupacion:
+      name: Selector Plugin Motel
+      description: Selecciona el plugin de la habitación.
+      selector:
+        entity:
+          filter:
+            - domain: input_select
+
+    switch_humo:
+      name: Selector CS_Humo
+      description: Selecciona el contacto seco del disparador de humo de la habitación.
+      selector:
+        entity:
+          filter:
+            - domain: switch
+
+    tiempo_espera_inicial:
+      name: Disparo inicial (segundos)
+      description: Selección de tiempo para el primer disparo de humo.
+      default: 600
+      selector:
+        number:
+          min: 1
+          max: 3600
+          unit_of_measurement: "segundos"
+
+    tiempo_intervalo_ciclo:
+      name: Intervalo entre encendidos (segundos)
+      description: Tiempo en segundos entre repeticiones mientras continúe ocupada.
+      default: 600
+      selector:
+        number:
+          min: 5
+          max: 7200
+          unit_of_measurement: "segundos"
+
+# Variables internas leídas desde el formulario del operario
+variables:
+  entidad_ocupacion: !input selector_ocupacion
+  entidad_switch: !input switch_humo
+
+triggers:
+  - trigger: state
+    entity_id: !input selector_ocupacion
+    to: "Ocupado"
+    for:
+      seconds: !input tiempo_espera_inicial
+
+conditions:
+  - condition: state
+    entity_id: !input selector_ocupacion
+    state: "Ocupado"
+
+actions:
+  # Ciclo de máximo 5 repeticiones mientras continúe Ocupado
+  - repeat:
+      while:
+        - condition: state
+          entity_id: !input selector_ocupacion
+          state: "Ocupado"
+        - condition: template
+          value_template: "{{ repeat.index <= 5 }}"
+      sequence:
+        - action: switch.turn_on
+          target:
+            entity_id: !input switch_humo
+        - delay:
+            seconds: !input tiempo_intervalo_ciclo
+
+mode: restart
