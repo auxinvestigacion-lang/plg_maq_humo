@@ -1,18 +1,15 @@
 blueprint:
-  name: "Bp-Plugin Humo v1.1"
+  name: "Bp-Plugin Humo v1.2"
   description: |
     Automatización para controlar el activador de humo de una habitación de forma cíclica
-    cuando pasa a estado "Ocupado", sin mantener delays en memoria.
+    cuando pasa a estado "Ocupado", sin mantener delays en memoria ni bloquear hilos.
 
-    v1.1 — Mejoras:
+    v1.2 — Mejoras:
+    - Apagado automático del switch tras t_humo usando la cláusula `for:` en el trigger (sin delay).
     - Usa un Timer (pasivo) en lugar de delay/repeat → menos CPU y RAM.
     - Usa un Counter para contar disparos → sobrevive reinicios.
     - Cancela el ciclo al salir de Ocupado.
     - Recuperación al arrancar Home Assistant si la habitación sigue ocupada.
-
-    Requisitos del operario (helpers por habitación):
-    1) Timer con restore activado (Settings → Devices & Services → Helpers).
-    2) Counter (restore por defecto). Vincular ambos en el formulario del blueprint.
 
   domain: automation
   input:
@@ -26,7 +23,7 @@ blueprint:
 
     switch_humo:
       name: Selector CS_Humo
-      description: Contacto seco del disparador de humo (pulso interno ~5 s).
+      description: Contacto seco del disparador de humo.
       selector:
         entity:
           filter:
@@ -84,12 +81,12 @@ blueprint:
           mode: box
 
     tiempo_encendido_humo:
-      name: Tiempo encendido humo (segundos)
-      description: Tiempo que va durar el disparo del humo
+      name: Tiempo disparo humo (segundos)
+      description: Tiempo que permanecerá encendido el interruptor de humo.
       default: 5
       selector:
         number:
-          min: 5
+          min: 1
           max: 1000
           unit_of_measurement: "segundos"
           mode: box
@@ -102,6 +99,7 @@ variables:
   espera_inicial: !input tiempo_espera_inicial
   intervalo: !input tiempo_intervalo_ciclo
   max_disparos: !input max_disparos
+  t_humo: !input tiempo_encendido_humo
 
 triggers:
   # 1) Habitación ocupada el tiempo inicial → primer disparo
@@ -128,15 +126,35 @@ triggers:
     event: start
     id: arranque
 
+  # 5) Switch encendido por t_humo segundos → apagar automáticamente 
+  - trigger: state
+    entity_id: !input switch_humo
+    to: "on"
+    for:
+      seconds: !input tiempo_encendido_humo
+    id: apagar_humo
+
 conditions: []
 
 actions:
   - choose:
-      # --- Salida de Ocupado: cancelar y resetear ---
+      # --- Apagar switch de humo automáticamente tras t_humo ---
+      - conditions:
+          - condition: trigger
+            id: apagar_humo
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input switch_humo
+
+      # --- Salida de Ocupado: cancelar, apagar y resetear ---
       - conditions:
           - condition: trigger
             id: fin
         sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input switch_humo
           - action: timer.cancel
             target:
               entity_id: !input timer_ciclo
@@ -161,9 +179,6 @@ actions:
           - action: switch.turn_on
             target:
               entity_id: !input switch_humo
-            data:
-              duration:
-                seconds: !input tiempo_encendido_humo
           - action: counter.increment
             target:
               entity_id: !input counter_disparos
@@ -192,9 +207,6 @@ actions:
           - action: switch.turn_on
             target:
               entity_id: !input switch_humo
-            data:
-              duration:
-                seconds: !input tiempo_encendido_humo
           - action: counter.increment
             target:
               entity_id: !input counter_disparos
