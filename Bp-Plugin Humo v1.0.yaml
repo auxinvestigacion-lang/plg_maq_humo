@@ -174,7 +174,7 @@ actions:
                 data:
                   duration: "{{ intervalo }}"
           - if:
-              - condition: switch.turn_on
+              - condition: switch.is_on
                 entity_id: !input switch_humo
                 for:
                    seconds: !input tiempo_encendido_humo
